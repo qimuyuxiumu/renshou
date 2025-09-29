@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>金额展示 - 前台</title>
+  <!-- 引入Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入Font Awesome图标 -->
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- 配置Tailwind自定义颜色 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#2563eb',
+            secondary: '#10b981',
+          },
+        },
+      }
+    }
+  </script>
+  
+  <!-- 自定义工具类 -->
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .amount-change {
+        animation: pulse 0.5s ease;
+      }
+      @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+      }
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex flex-col items-center justify-center p-4">
+  
+  <div class="text-center max-w-md w-full">
+    <!-- 标题区域 -->
+    <div class="mb-10">
+      <h1 class="text-[clamp(1.5rem,4vw,2rem)] font-bold text-primary mb-2">当前金额展示</h1>
+      <p class="text-gray-600">实时显示最新金额数据</p>
+    </div>
+    
+    <!-- 金额显示区域 -->
+    <div class="bg-white rounded-2xl p-8 shadow-xl mb-8">
+      <div class="relative inline-block">
+        <span class="absolute -left-8 top-1/2 -translate-y-1/2 text-gray-400 text-3xl">¥</span>
+        <div id="currentAmount" class="text-[clamp(3rem,10vw,5rem)] font-bold text-primary pl-8">0.00</div>
+      </div>
+    </div>
+    
+    <!-- 后台管理入口 -->
+    <a href="backend.html" class="inline-flex items-center text-primary hover:text-blue-700 transition-colors duration-200 font-medium">
+      <i class="fa fa-cog mr-2"></i> 后台管理
+    </a>
+  </div>
+  
+  <script>
+    // 获取DOM元素
+    const currentAmountEl = document.getElementById('currentAmount');
+    
+    // 从localStorage获取数据或设置默认值
+    function getStoredData() {
+      const data = localStorage.getItem('amountData');
+      if (data) {
+        return JSON.parse(data);
+      }
+      // 设置默认值
+      const defaultData = {
+        totalAmount: 1000,
+        decrementAmount: 100,
+        currentAmount: 1000
+      };
+      saveData(defaultData);
+      return defaultData;
+    }
+    
+    // 保存数据到localStorage
+    function saveData(data) {
+      localStorage.setItem('amountData', JSON.stringify(data));
+    }
+    
+    // 更新显示的金额
+    function updateDisplay(playAnimation = false) {
+      const data = getStoredData();
+      currentAmountEl.textContent = data.currentAmount.toFixed(2);
+      
+      // 如果需要，添加金额变化的动画效果
+      if (playAnimation) {
+        currentAmountEl.classList.add('amount-change', 'text-secondary');
+        setTimeout(() => {
+          currentAmountEl.classList.remove('amount-change', 'text-secondary');
+        }, 500);
+      }
+    }
+    
+    // 初始显示
+    updateDisplay();
+    
+    // 监听storage事件，当数据变化时更新显示
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'amountData') {
+        updateDisplay(true);
+      }
+    });
+  </script>
+</body>
+</html>
+    
