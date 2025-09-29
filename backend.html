@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>金额管理 - 后台</title>
+  <!-- 引入Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入Font Awesome图标 -->
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- 配置Tailwind自定义颜色 -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#2563eb',
+            secondary: '#10b981',
+            danger: '#ef4444',
+          },
+        },
+      }
+    }
+  </script>
+  
+  <!-- 自定义工具类 -->
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .content-auto {
+        content-visibility: auto;
+      }
+      .button-press {
+        transform: scale(0.98);
+      }
+    }
+  </style>
+</head>
+<body class="bg-gray-50 min-h-screen font-sans p-4 md:p-8">
+  
+  <div class="max-w-md mx-auto">
+    <!-- 标题和返回链接 -->
+    <div class="mb-8">
+      <a href="frontend.html" class="inline-flex items-center text-gray-600 hover:text-primary transition-colors duration-200 mb-4">
+        <i class="fa fa-arrow-left mr-2"></i> 返回前台
+      </a>
+      <h1 class="text-[clamp(1.5rem,4vw,2rem)] font-bold text-primary">金额管理 - 后台</h1>
+      <p class="text-gray-600">设置金额和执行扣减操作</p>
+    </div>
+    
+    <!-- 主卡片 -->
+    <div class="bg-white rounded-2xl p-6 md:p-8 shadow-lg mb-6">
+      
+      <!-- 当前金额预览 -->
+      <div class="mb-8 text-center">
+        <p class="text-gray-500 text-sm mb-1">当前金额预览</p>
+        <div class="relative inline-block">
+          <span class="absolute -left-6 top-1/2 -translate-y-1/2 text-gray-400 text-xl">¥</span>
+          <div id="currentAmount" class="text-3xl font-bold text-primary pl-6">0.00</div>
+        </div>
+      </div>
+      
+      <!-- 设置区域 -->
+      <div class="space-y-5 mb-8">
+        <div>
+          <label for="totalAmount" class="block text-sm font-medium text-gray-700 mb-1">初始总金额</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">¥</span>
+            <input 
+              type="number" 
+              id="totalAmount" 
+              class="w-full pl-8 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all duration-200"
+              placeholder="请输入初始金额"
+              min="0"
+              step="0.01"
+            >
+          </div>
+        </div>
+        
+        <div>
+          <label for="decrementAmount" class="block text-sm font-medium text-gray-700 mb-1">每次扣减金额</label>
+          <div class="relative">
+            <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-500">¥</span>
+            <input 
+              type="number" 
+              id="decrementAmount" 
+              class="w-full pl-8 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all duration-200"
+              placeholder="请输入扣减金额"
+              min="0.01"
+              step="0.01"
+            >
+          </div>
+        </div>
+      </div>
+      
+      <!-- 控制按钮区域 -->
+      <div class="flex space-x-4">
+        <button 
+          id="decrementBtn" 
+          class="flex-1 bg-danger hover:bg-red-600 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center active:button-press"
+        >
+          <i class="fa fa-minus-circle mr-2"></i> 扣减一次
+        </button>
+        <button 
+          id="resetBtn" 
+          class="flex-1 bg-secondary hover:bg-green-600 text-white font-medium py-3 px-4 rounded-lg transition-all duration-200 flex items-center justify-center active:button-press"
+        >
+          <i class="fa fa-refresh mr-2"></i> 重置
+        </button>
+      </div>
+    </div>
+    
+    <!-- 操作提示 -->
+    <div class="bg-blue-50 border-l-4 border-primary p-4 rounded text-sm text-gray-700">
+      <p><i class="fa fa-info-circle text-primary mr-2"></i> 所有更改会实时同步到前台显示</p>
+    </div>
+  </div>
+  
+  <script>
+    // 获取DOM元素
+    const currentAmountEl = document.getElementById('currentAmount');
+    const totalAmountEl = document.getElementById('totalAmount');
+    const decrementAmountEl = document.getElementById('decrementAmount');
+    const decrementBtn = document.getElementById('decrementBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    
+    // 从localStorage获取数据或设置默认值
+    function getStoredData() {
+      const data = localStorage.getItem('amountData');
+      if (data) {
+        return JSON.parse(data);
+      }
+      // 设置默认值
+      const defaultData = {
+        totalAmount: 1000,
+        decrementAmount: 100,
+        currentAmount: 1000
+      };
+      saveData(defaultData);
+      return defaultData;
+    }
+    
+    // 保存数据到localStorage
+    function saveData(data) {
+      localStorage.setItem('amountData', JSON.stringify(data));
+    }
+    
+    // 更新显示的金额
+    function updateDisplay() {
+      const data = getStoredData();
+      currentAmountEl.textContent = data.currentAmount.toFixed(2);
+      totalAmountEl.value = data.totalAmount;
+      decrementAmountEl.value = data.decrementAmount;
+    }
+    
+    // 单次扣减操作
+    function decrementOnce() {
+      const data = getStoredData();
+      const decrement = parseFloat(decrementAmountEl.value);
+      
+      // 验证输入
+      if (isNaN(decrement) || decrement <= 0) {
+        alert('请输入有效的扣减金额');
+        return;
+      }
+      
+      // 执行扣减，确保不小于0
+      data.currentAmount = Math.max(0, data.currentAmount - decrement);
+      data.decrementAmount = decrement; // 保存当前扣减金额设置
+      
+      saveData(data);
+      updateDisplay();
+      
+      // 添加按钮点击反馈
+      decrementBtn.classList.add('button-press');
+      setTimeout(() => {
+        decrementBtn.classList.remove('button-press');
+      }, 150);
+    }
+    
+    // 重置金额
+    function resetAmount() {
+      const data = getStoredData();
+      const total = parseFloat(totalAmountEl.value);
+      
+      if (!isNaN(total) && total >= 0) {
+        data.totalAmount = total;
+        data.currentAmount = total;
+        saveData(data);
+        updateDisplay();
+      } else {
+        alert('请输入有效的初始金额');
+      }
+      
+      // 添加按钮点击反馈
+      resetBtn.classList.add('button-press');
+      setTimeout(() => {
+        resetBtn.classList.remove('button-press');
+      }, 150);
+    }
+    
+    // 事件监听
+    decrementBtn.addEventListener('click', decrementOnce);
+    resetBtn.addEventListener('click', resetAmount);
+    
+    // 支持回车键扣减
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        decrementOnce();
+      }
+    });
+    
+    // 初始化页面
+    updateDisplay();
+  </script>
+</body>
+</html>
+    
